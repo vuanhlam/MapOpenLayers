@@ -1,16 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Reprojection with EPSG.io Search</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="node_modules/ol/ol.css">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="node_modules/ol/ol.css" />
+    <link rel="stylesheet" href="ol3gm.css" type="text/css" />
     <style>
       .map {
         width: 100%;
         height: 800px;
       }
     </style>
+    <script
+      type="text/javascript"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCeyk0DO66Ltlnx3UxB5ONEFweZ00uRMeI&callback=initMap"
+    ></script>
   </head>
   <body>
     <div id="map" class="map"></div>

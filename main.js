@@ -1,32 +1,32 @@
 import Map from "ol/Map.js";
-import OSM from "ol/source/OSM.js";
-import TileLayer from "ol/layer/Tile.js";
 import View from "ol/View.js";
+import OLGoogleMaps from "olgm/OLGoogleMaps.js";
+import GoogleLayer from "olgm/layer/Google.js";
+import { defaults as defaultInteractions } from "olgm/interaction.js";
 
+const center = [107.84641987555096, 15.557018118480753];
+// const center = [15.557018118480753, 107.84641987555096];
 
-const osmSource = new OSM();
+// This dummy layer tells Google Maps to switch to its default map type
+const googleLayer = new GoogleLayer();
+
+const SatelliteLayer = new GoogleLayer({
+  mapTypeId: google.maps.MapTypeId.SATELLITE,
+});
 
 const map = new Map({
+  // use OL3-Google-Maps recommended default interactions
+  interactions: defaultInteractions(),
   layers: [
-    new TileLayer({
-      source: osmSource, //*  An OpenStreetMap layer providing the base map tiles
-    }),
+    // googleLayer,
+    SatelliteLayer,
   ],
   target: "map",
   view: new View({
-    //*  This property specifies the initial view of the map. It is an object containing various view-related properties
-    /**
-     *! The projection of the map. In the code, it is set to "EPSG:4326",
-     *! which is the identifier for the WGS 84 projection used for representing geographic coordinates in degrees.
-     */
-    projection: "EPSG:4326",
-    /**
-     *! The initial center of the map. It is an array of two numbers representing the longitude and latitude in the specified projection
-     */
-    center: [107.84641987555096, 15.557018118480753],
-    /**
-     *! The initial zoom level of the map
-     */
-    zoom: 5.8,
+    center: center,
+    zoom: 5.8,  
   }),
 });
+
+const olGM = new OLGoogleMaps({ map: map }); // map is the Map instance
+olGM.activate();
