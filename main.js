@@ -32,19 +32,31 @@ const graticule = new Graticule({
   wrapX: false,
 });
 
+
+
 const map = new Map({
   layers: [
     new TileLayer({
-      source: osmSource,
+      source: osmSource, //*  An OpenStreetMap layer providing the base map tiles
     }),
-    debugLayer,
-    graticule,
+    debugLayer,  //* A debug layer used to visualize the tile grid and bounding boxes of the tiles.
+    graticule,   //* A graticule layer showing grid lines of latitude and longitude
   ],
   target: "map",
-  view: new View({
-    projection: "EPSG:3857",
-    center: [0, 0],
-    zoom: 1,
+  view: new View({ //*  This property specifies the initial view of the map. It is an object containing various view-related properties
+    /**
+     *! The projection of the map. In the code, it is set to "EPSG:4326", 
+     *! which is the identifier for the WGS 84 projection used for representing geographic coordinates in degrees. 
+    */
+    projection: "EPSG:4326", 
+    /**
+     *! The initial center of the map. It is an array of two numbers representing the longitude and latitude in the specified projection 
+    */
+    center: [107.84641987555096, 15.557018118480753],
+    /**
+     *! The initial zoom level of the map 
+    */
+    zoom: 5.8,
   }),
 });
 
@@ -55,103 +67,103 @@ const renderEdgesCheckbox = document.getElementById("render-edges");
 const showTilesCheckbox = document.getElementById("show-tiles");
 const showGraticuleCheckbox = document.getElementById("show-graticule");
 
-function setProjection(code, name, proj4def, bbox) {
-  if (code === null || name === null || proj4def === null || bbox === null) {
-    resultSpan.innerHTML = "Nothing usable found, using EPSG:3857...";
-    map.setView(
-      new View({
-        projection: "EPSG:3857",
-        center: [0, 0],
-        zoom: 1,
-      })
-    );
-    return;
-  }
+// function setProjection(code, name, proj4def, bbox) {
+//   if (code === null || name === null || proj4def === null || bbox === null) {
+//     resultSpan.innerHTML = "Nothing usable found, using EPSG:3857...";
+//     map.setView(
+//       new View({
+//         projection: "EPSG:3857",
+//         center: [0, 0],
+//         zoom: 1,
+//       })
+//     );
+//     return;
+//   }
 
-  resultSpan.innerHTML = "(" + code + ") " + name;
+//   resultSpan.innerHTML = "(" + code + ") " + name;
 
-  const newProjCode = "EPSG:" + code;
-  proj4.defs(newProjCode, proj4def);
-  register(proj4);
-  const newProj = getProjection(newProjCode);
-  const fromLonLat = getTransform("EPSG:4326", newProj);
+//   const newProjCode = "EPSG:" + code;
+//   proj4.defs(newProjCode, proj4def);
+//   register(proj4);
+//   const newProj = getProjection(newProjCode);
+//   const fromLonLat = getTransform("EPSG:4326", newProj);
 
-  let worldExtent = [bbox[1], bbox[2], bbox[3], bbox[0]];
-  newProj.setWorldExtent(worldExtent);
+//   let worldExtent = [bbox[1], bbox[2], bbox[3], bbox[0]];
+//   newProj.setWorldExtent(worldExtent);
 
-  // approximate calculation of projection extent,
-  // checking if the world extent crosses the dateline
-  if (bbox[1] > bbox[3]) {
-    worldExtent = [bbox[1], bbox[2], bbox[3] + 360, bbox[0]];
-  }
-  const extent = applyTransform(worldExtent, fromLonLat, undefined, 8);
-  newProj.setExtent(extent);
-  const newView = new View({
-    projection: newProj,
-  });
-  map.setView(newView);
-  newView.fit(extent);
-}
+//   // approximate calculation of projection extent,
+//   // checking if the world extent crosses the dateline
+//   if (bbox[1] > bbox[3]) {
+//     worldExtent = [bbox[1], bbox[2], bbox[3] + 360, bbox[0]];
+//   }
+//   const extent = applyTransform(worldExtent, fromLonLat, undefined, 8);
+//   newProj.setExtent(extent);
+//   const newView = new View({
+//     projection: newProj,
+//   });
+//   map.setView(newView);
+//   newView.fit(extent);
+// }
 
-function search(query) {
-  resultSpan.innerHTML = "Searching ...";
-  fetch("https://epsg.io/?format=json&q=" + query)
-    .then(function (response) {
-      return response.json();
-    })
-    .then(function (json) {
-      const results = json["results"];
-      if (results && results.length > 0) {
-        for (let i = 0, ii = results.length; i < ii; i++) {
-          const result = results[i];
-          if (result) {
-            const code = result["code"];
-            const name = result["name"];
-            const proj4def = result["wkt"];
-            const bbox = result["bbox"];
-            if (
-              code &&
-              code.length > 0 &&
-              proj4def &&
-              proj4def.length > 0 &&
-              bbox &&
-              bbox.length == 4
-            ) {
-              setProjection(code, name, proj4def, bbox);
-              return;
-            }
-          }
-        }
-      }
-      setProjection(null, null, null, null);
-    });
-}
+// function search(query) {
+//   resultSpan.innerHTML = "Searching ...";
+//   fetch("https://epsg.io/?format=json&q=" + query)
+//     .then(function (response) {
+//       return response.json();
+//     })
+//     .then(function (json) {
+//       const results = json["results"];
+//       if (results && results.length > 0) {
+//         for (let i = 0, ii = results.length; i < ii; i++) {
+//           const result = results[i];
+//           if (result) {
+//             const code = result["code"];
+//             const name = result["name"];
+//             const proj4def = result["wkt"];
+//             const bbox = result["bbox"];
+//             if (
+//               code &&
+//               code.length > 0 &&
+//               proj4def &&
+//               proj4def.length > 0 &&
+//               bbox &&
+//               bbox.length == 4
+//             ) {
+//               setProjection(code, name, proj4def, bbox);
+//               return;
+//             }
+//           }
+//         }
+//       }
+//       setProjection(null, null, null, null);
+//     });
+// }
 
-/**
- * Handle click event.
- * @param {Event} event The event.
- */
-searchButton.onclick = function (event) {
-  search(queryInput.value);
-  event.preventDefault();
-};
+// /**
+//  * Handle click event.
+//  * @param {Event} event The event.
+//  */
+// searchButton.onclick = function (event) {
+//   search(queryInput.value);
+//   event.preventDefault();
+// };
 
-/**
- * Handle checkbox change events.
- */
-function onReprojectionChange() {
-  osmSource.setRenderReprojectionEdges(renderEdgesCheckbox.checked);
-}
-function onGraticuleChange() {
-  graticule.setVisible(showGraticuleCheckbox.checked);
-}
-function onTilesChange() {
-  debugLayer.setVisible(showTilesCheckbox.checked);
-}
-showGraticuleCheckbox.addEventListener("change", onGraticuleChange);
-renderEdgesCheckbox.addEventListener("change", onReprojectionChange);
-showTilesCheckbox.addEventListener("change", onTilesChange);
+// /**
+//  * Handle checkbox change events.
+//  */
+// function onReprojectionChange() {
+//   osmSource.setRenderReprojectionEdges(renderEdgesCheckbox.checked);
+// }
+// function onGraticuleChange() {
+//   graticule.setVisible(showGraticuleCheckbox.checked);
+// }
+// function onTilesChange() {
+//   debugLayer.setVisible(showTilesCheckbox.checked);
+// }
+// showGraticuleCheckbox.addEventListener("change", onGraticuleChange);
+// renderEdgesCheckbox.addEventListener("change", onReprojectionChange);
+// showTilesCheckbox.addEventListener("change", onTilesChange);
 
-onReprojectionChange();
-onGraticuleChange();
-onTilesChange();
+// onReprojectionChange();
+// onGraticuleChange();
+// onTilesChange();
