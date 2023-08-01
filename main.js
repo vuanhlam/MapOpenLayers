@@ -3,12 +3,13 @@ import View from "ol/View.js";
 import OLGoogleMaps from "olgm/OLGoogleMaps.js";
 import GoogleLayer from "olgm/layer/Google.js";
 import { defaults as defaultInteractions } from "olgm/interaction.js";
+import { transform } from "ol/proj.js";
 
 const center = [107.84641987555096, 15.557018118480753];
 // const center = [15.557018118480753, 107.84641987555096];
 
 // This dummy layer tells Google Maps to switch to its default map type
-const googleLayer = new GoogleLayer();
+// const googleLayer = new GoogleLayer();
 
 const SatelliteLayer = new GoogleLayer({
   mapTypeId: google.maps.MapTypeId.SATELLITE,
@@ -23,8 +24,8 @@ const map = new Map({
   ],
   target: "map",
   view: new View({
-    center: center,
-    zoom: 5.8,  
+    center: transform([107.84641987555096, 15.557018118480753], "EPSG:4326", "EPSG:3857"),
+    zoom: 5.8,
   }),
 });
 
