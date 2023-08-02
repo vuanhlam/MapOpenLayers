@@ -7,21 +7,26 @@ import { transform } from "ol/proj.js";
 import { OSM, Vector as VectorSource } from "ol/source.js";
 import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer.js";
 import { Draw, Modify, Snap } from "ol/interaction.js";
+import {toLonLat} from 'ol/proj';
 
-// This dummy layer tells Google Maps to switch to its default map type
-// const googleLayer = new GoogleLayer();
-
+/**
+ *! Layer 
+*/
 const SatelliteLayer = new GoogleLayer({
   mapTypeId: google.maps.MapTypeId.SATELLITE,
 });
 
+
+/**
+ *! Vector 
+*/
 const source = new VectorSource();
 const vector = new VectorLayer({
   source: source,
   style: {
     "fill-color": "rgba(255, 255, 255, 0.2)",
-    "stroke-color": "#ffcc33",
-    "stroke-width": 2,
+    "stroke-color": "#fd0101",
+    "stroke-width": 3,
     "circle-radius": 7,
     "circle-fill-color": "#ffcc33",
   },
@@ -42,18 +47,26 @@ const map = new Map({
   }),
 });
 
+/**
+ *! interaction used for modifying vector features on the map
+ *! It allows users to edit the vertices and geometry of vector features, such as points, lines, and polygons.
+ *! edit when drawed vector 
+*/
 const modify = new Modify({ source: source });
 map.addInteraction(modify);
 
 let draw, snap; // global so we can remove them later
 const typeSelect = document.getElementById("type");
+console.log(typeSelect.value);
 
 function addInteractions() {
   draw = new Draw({
     source: source,
     type: typeSelect.value,
   });
+  // console.log(draw);
   map.addInteraction(draw);
+  console.log(typeSelect.value);
   snap = new Snap({ source: source });
   map.addInteraction(snap);
 }
@@ -62,10 +75,26 @@ function addInteractions() {
  * Handle change event.
  */
 typeSelect.onchange = function () {
-  map.removeInteraction(draw);
+  map.removeInteraction(draw); //* remove type of drawing when switch to the new one 
   map.removeInteraction(snap);
   addInteractions();
 };
+
+//TODO: Get coordinate when point a place on map
+map.on('click', function(event) { 
+  // Get the clicked coordinate from the event
+  const clickedCoordinate = event.coordinate;
+
+  // Convert the clicked coordinate from the map projection (EPSG:3857) to lon/lat (EPSG:4326)
+  const lonLatCoordinate = toLonLat(clickedCoordinate);
+
+  // Extract the latitude and longitude from the lon/lat coordinate
+  const latitude = lonLatCoordinate[1];
+  const longitude = lonLatCoordinate[0];
+
+  // Now you have the latitude and longitude of the clicked point
+  console.log('Vĩ độ -> Latitude:', latitude, 'Kinh độ -> Longitude:', longitude);
+});
 
 addInteractions();
 

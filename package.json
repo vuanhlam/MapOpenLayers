@@ -2,7 +2,7 @@
   "name": "ol-vite",
   "version": "1.0.0",
   "scripts": {
-    "start": "vite",
+    "start": "vite --port 3002",
     "build": "vite build",
     "serve": "vite preview"
   },
