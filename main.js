@@ -4,22 +4,18 @@ import OLGoogleMaps from "olgm/OLGoogleMaps.js";
 import GoogleLayer from "olgm/layer/Google.js";
 import { defaults as defaultInteractions } from "olgm/interaction.js";
 import { transform } from "ol/proj.js";
-import { OSM, Vector as VectorSource } from "ol/source.js";
-import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer.js";
+
 import { Draw, Modify, Snap } from "ol/interaction.js";
 import { toLonLat } from "ol/proj";
 import Overlay from "ol/Overlay.js";
 import { Circle as CircleStyle, Fill, Stroke, Style } from "ol/style.js";
 import { unByKey } from "ol/Observable.js";
 import { LineString, Polygon } from "ol/geom.js";
-import { getArea, getLength } from "ol/sphere.js";
+import { formatArea, formatLength } from "./utils/utils.js";
+import { source, vector } from "./utils/vector.js";
+import XYZ from "ol/source/XYZ";
+import { Tile as TileLayer } from "ol/layer.js";
 
-let result = {
-  longitude: "",
-  latitude: "",
-  km2: "",
-  km: "",
-};
 
 /**
  * Currently drawn feature.
@@ -72,7 +68,7 @@ const pointerMoveHandler = function (evt) {
     return;
   }
   /** @type {string} */
-  let helpMsg = "Click to start drawing";
+  let helpMsg = "Nhấn để bắt đầu vẽ";
 
   if (sketch) {
     const geom = sketch.getGeometry();
@@ -89,32 +85,17 @@ const pointerMoveHandler = function (evt) {
   helpTooltipElement.classList.remove("hidden");
 };
 
-/**
- *! Layer
- */
-const SatelliteLayer = new GoogleLayer({
-  mapTypeId: google.maps.MapTypeId.SATELLITE,
-});
-
-/**
- *! Vector
- */
-const source = new VectorSource();
-const vector = new VectorLayer({
-  source: source,
-  style: {
-    "fill-color": "rgba(255, 255, 255, 0.2)",
-    "stroke-color": "#fd0101",
-    "stroke-width": 3,
-    "circle-radius": 7,
-    "circle-fill-color": "#ffcc33",
-  },
-});
-
 const map = new Map({
   // use OL3-Google-Maps recommended default interactions
   interactions: defaultInteractions(),
-  layers: [SatelliteLayer, vector],
+  layers: [
+    new TileLayer({
+      source: new XYZ({
+        url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+      }),
+    }),
+    vector,
+  ],
   target: "map",
   view: new View({
     center: transform(
@@ -225,44 +206,16 @@ map.on("click", function (event) {
 });
 
 // --------------------------------------------- Get length -----------------------------------------//
+
+// sets up an event listener on the map for the "pointermove" event.
+// When the user moves the mouse pointer over the map,
+// the event will be triggered, and the pointerMoveHandler function will be called.
 map.on("pointermove", pointerMoveHandler);
 
+// hiding the help tooltip when the user moves the mouse cursor outside the map's viewport.
 map.getViewport().addEventListener("mouseout", function () {
   helpTooltipElement.classList.add("hidden");
 });
-
-/**
- * Format length output.
- * @param {LineString} line The line.
- * @return {string} The formatted length.
- */
-const formatLength = function (line) {
-  // console.log(line);
-  const length = getLength(line);
-  let output;
-  if (length > 100) {
-    output = Math.round((length / 1000) * 100) / 100 + " " + "km";
-  } else {
-    output = Math.round(length * 100) / 100 + " " + "m";
-  }
-  return output;
-};
-
-/**
- * Format area output.
- * @param {Polygon} polygon The polygon.
- * @return {string} Formatted area.
- */
-const formatArea = function (polygon) {
-  const area = getArea(polygon);
-  let output;
-  if (area > 10000) {
-    output = Math.round((area / 1000000) * 100) / 100 + " " + "km<sup>2</sup>";
-  } else {
-    output = Math.round(area * 100) / 100 + " " + "m<sup>2</sup>";
-  }
-  return output;
-};
 
 /**
  * Creates a new help tooltip
@@ -305,15 +258,8 @@ function createMeasureTooltip() {
  */
 typeSelect.onchange = function () {
   map.removeInteraction(draw);
-  map.removeInteraction(snap);
+  // map.removeInteraction(snap);
   addInteractions();
 };
 
 addInteractions();
-
-const olGM = new OLGoogleMaps({ map: map }); // map is the Map instance
-olGM.activate();
-
-function myFunction() {
-  console.log('ahihi');
-}
