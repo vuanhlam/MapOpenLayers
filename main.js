@@ -24,7 +24,7 @@ let sketch, snap;
  * The measure tooltip element.
  * @type {HTMLElement}
  */
-let measureTooltipElement;
+// let measureTooltipElement;
 
 /**
  * Overlay to show the measurement.
@@ -33,6 +33,7 @@ let measureTooltipElement;
 let measureTooltip;
 let measureTooltips = [];
 let features = [];
+let drawnFeatures = [];
 
 const map = new Map({
   // use OL3-Google-Maps recommended default interactions
@@ -96,8 +97,6 @@ function addInteractions() {
   });
   map.addInteraction(draw);
 
-  createMeasureTooltip();
-
   let listener;
   draw.on("drawstart", function (evt) {
     // set sketch
@@ -116,22 +115,16 @@ function addInteractions() {
         output = formatLength(geom);
         tooltipCoord = geom.getLastCoordinate();
       }
-      measureTooltipElement.innerHTML = output;
-      // console.log(output);
-      measureTooltip.setPosition(tooltipCoord);
+      console.log(output);
     });
   });
 
   draw.on("drawend", function (evt) {
-    measureTooltipElement.className = "ol-tooltip ol-tooltip-static";
-    measureTooltip.setOffset([0, -7]);
-    // unset sketch
     sketch = null;
-    // unset tooltip so that a new one can be created
-    measureTooltipElement = null;
-    createMeasureTooltip();
     unByKey(listener);
+    //delete lineString
     features.push(evt.feature);
+    drawnFeatures.push(evt.feature);
   });
 }
 
@@ -156,28 +149,6 @@ map.on("click", function (event) {
   // );
 });
 
-// --------------------------------------------- Get length -----------------------------------------//
-
-/**
- * Creates a new measure tooltip
- */
-function createMeasureTooltip() {
-  if (measureTooltipElement) {
-    measureTooltipElement.parentNode.removeChild(measureTooltipElement);
-  }
-  measureTooltipElement = document.createElement("div");
-  measureTooltipElement.className = "ol-tooltip ol-tooltip-measure";
-  measureTooltip = new Overlay({
-    element: measureTooltipElement,
-    offset: [0, -15],
-    positioning: "bottom-center",
-    stopEvent: false,
-    insertFirst: false,
-  });
-  map.addOverlay(measureTooltip);
-  measureTooltips.push(measureTooltip);
-}
-
 //------------------------------------------------ Delete ---------------------------------------------//
 
 clearAll.addEventListener("click", function () {
@@ -194,6 +165,17 @@ undoButton.addEventListener('click', function() {
   const lastFeature = features.pop();
   if (lastFeature) {
     source.removeFeature(lastFeature);
+  }
+});
+
+document.addEventListener('keydown', function(evt) {
+  // Check if Ctrl + Z was pressed
+  if (evt.ctrlKey && evt.key === 'z') {
+    // Remove the last drawn feature
+    let lastFeature = drawnFeatures.pop();
+    if (lastFeature) {
+      source.removeFeature(lastFeature);
+    }
   }
 });
 
