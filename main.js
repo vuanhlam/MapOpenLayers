@@ -32,6 +32,7 @@ let measureTooltipElement;
  */
 let measureTooltip;
 let measureTooltips = [];
+let features = [];
 
 const map = new Map({
   // use OL3-Google-Maps recommended default interactions
@@ -65,17 +66,8 @@ map.addInteraction(modify);
 
 let draw; // global so we can remove them later
 const typeSelect = document.getElementById("type");
-const clearAll = document.getElementById('deleteAll');
-
-clearAll.addEventListener('click', function() {
-  // xóa vector 
-  source.clear();
-  // xóa measure tooltip
-  measureTooltips.forEach(function(tooltip) {
-    map.removeOverlay(tooltip);
-  });
-  measureTooltips = [];
-})
+const clearAll = document.getElementById("deleteAll");
+const undoButton = document.getElementById('undo');
 
 function addInteractions() {
   draw = new Draw({
@@ -130,7 +122,7 @@ function addInteractions() {
     });
   });
 
-  draw.on("drawend", function () {
+  draw.on("drawend", function (evt) {
     measureTooltipElement.className = "ol-tooltip ol-tooltip-static";
     measureTooltip.setOffset([0, -7]);
     // unset sketch
@@ -139,6 +131,7 @@ function addInteractions() {
     measureTooltipElement = null;
     createMeasureTooltip();
     unByKey(listener);
+    features.push(evt.feature);
   });
 }
 
@@ -184,6 +177,25 @@ function createMeasureTooltip() {
   map.addOverlay(measureTooltip);
   measureTooltips.push(measureTooltip);
 }
+
+//------------------------------------------------ Delete ---------------------------------------------//
+
+clearAll.addEventListener("click", function () {
+  // xóa vector
+  source.clear();
+  // xóa measure tooltip
+  measureTooltips.forEach(function (tooltip) {
+    map.removeOverlay(tooltip);
+  });
+  measureTooltips = [];
+}); 
+
+undoButton.addEventListener('click', function() {
+  const lastFeature = features.pop();
+  if (lastFeature) {
+    source.removeFeature(lastFeature);
+  }
+});
 
 /**
  *! remove type of drawing when switch to the new one
