@@ -1,11 +1,9 @@
 import Map from "ol/Map.js";
 import View from "ol/View.js";
-import OLGoogleMaps from "olgm/OLGoogleMaps.js";
-import GoogleLayer from "olgm/layer/Google.js";
 import { defaults as defaultInteractions } from "olgm/interaction.js";
 import { transform } from "ol/proj.js";
 
-import { Draw, Modify, Snap } from "ol/interaction.js";
+import { Draw, Modify } from "ol/interaction.js";
 import { toLonLat } from "ol/proj";
 import Overlay from "ol/Overlay.js";
 import { Circle as CircleStyle, Fill, Stroke, Style } from "ol/style.js";
@@ -16,24 +14,11 @@ import { source, vector } from "./utils/vector.js";
 import XYZ from "ol/source/XYZ";
 import { Tile as TileLayer } from "ol/layer.js";
 
-
 /**
  * Currently drawn feature.
  * @type {import("../src/ol/Feature.js").default}
  */
-let sketch;
-
-/**
- * The help tooltip element.
- * @type {HTMLElement}
- */
-let helpTooltipElement;
-
-/**
- * Overlay to show the help messages.
- * @type {Overlay}
- */
-let helpTooltip;
+let sketch, snap;
 
 /**
  * The measure tooltip element.
@@ -46,44 +31,7 @@ let measureTooltipElement;
  * @type {Overlay}
  */
 let measureTooltip;
-
-/**
- * Message to show when the user is drawing a polygon.
- * @type {string}
- */
-const continuePolygonMsg = "Click to continue drawing the polygon";
-
-/**
- * Message to show when the user is drawing a line.
- * @type {string}
- */
-const continueLineMsg = "Click to continue drawing the line";
-
-/**
- * Handle pointer move.
- * @param {import("../src/ol/MapBrowserEvent").default} evt The event.
- */
-const pointerMoveHandler = function (evt) {
-  if (evt.dragging) {
-    return;
-  }
-  /** @type {string} */
-  let helpMsg = "Nhấn để bắt đầu vẽ";
-
-  if (sketch) {
-    const geom = sketch.getGeometry();
-    if (geom instanceof Polygon) {
-      helpMsg = continuePolygonMsg;
-    } else if (geom instanceof LineString) {
-      helpMsg = continueLineMsg;
-    }
-  }
-
-  helpTooltipElement.innerHTML = helpMsg;
-  helpTooltip.setPosition(evt.coordinate);
-
-  helpTooltipElement.classList.remove("hidden");
-};
+let measureTooltips = [];
 
 const map = new Map({
   // use OL3-Google-Maps recommended default interactions
@@ -115,8 +63,19 @@ const map = new Map({
 const modify = new Modify({ source: source });
 map.addInteraction(modify);
 
-let draw, snap; // global so we can remove them later
+let draw; // global so we can remove them later
 const typeSelect = document.getElementById("type");
+const clearAll = document.getElementById('deleteAll');
+
+clearAll.addEventListener('click', function() {
+  // xóa vector 
+  source.clear();
+  // xóa measure tooltip
+  measureTooltips.forEach(function(tooltip) {
+    map.removeOverlay(tooltip);
+  });
+  measureTooltips = [];
+})
 
 function addInteractions() {
   draw = new Draw({
@@ -146,7 +105,6 @@ function addInteractions() {
   map.addInteraction(draw);
 
   createMeasureTooltip();
-  createHelpTooltip();
 
   let listener;
   draw.on("drawstart", function (evt) {
@@ -197,42 +155,15 @@ map.on("click", function (event) {
   const longitude = lonLatCoordinate[0];
 
   // Now you have the latitude and longitude of the clicked point
-  console.log(
-    "Vĩ độ -> Latitude:",
-    latitude,
-    "Kinh độ -> Longitude:",
-    longitude
-  );
+  // console.log(
+  //   "Vĩ độ -> Latitude:",
+  //   latitude,
+  //   "Kinh độ -> Longitude:",
+  //   longitude
+  // );
 });
 
 // --------------------------------------------- Get length -----------------------------------------//
-
-// sets up an event listener on the map for the "pointermove" event.
-// When the user moves the mouse pointer over the map,
-// the event will be triggered, and the pointerMoveHandler function will be called.
-map.on("pointermove", pointerMoveHandler);
-
-// hiding the help tooltip when the user moves the mouse cursor outside the map's viewport.
-map.getViewport().addEventListener("mouseout", function () {
-  helpTooltipElement.classList.add("hidden");
-});
-
-/**
- * Creates a new help tooltip
- */
-function createHelpTooltip() {
-  if (helpTooltipElement) {
-    helpTooltipElement.parentNode.removeChild(helpTooltipElement);
-  }
-  helpTooltipElement = document.createElement("div");
-  helpTooltipElement.className = "ol-tooltip hidden";
-  helpTooltip = new Overlay({
-    element: helpTooltipElement,
-    offset: [15, 0],
-    positioning: "center-left",
-  });
-  map.addOverlay(helpTooltip);
-}
 
 /**
  * Creates a new measure tooltip
@@ -251,6 +182,7 @@ function createMeasureTooltip() {
     insertFirst: false,
   });
   map.addOverlay(measureTooltip);
+  measureTooltips.push(measureTooltip);
 }
 
 /**
@@ -258,7 +190,6 @@ function createMeasureTooltip() {
  */
 typeSelect.onchange = function () {
   map.removeInteraction(draw);
-  // map.removeInteraction(snap);
   addInteractions();
 };
 
