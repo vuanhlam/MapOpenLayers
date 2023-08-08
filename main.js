@@ -13,10 +13,9 @@ import { formatArea, formatLength } from "./utils/utils.js";
 // import { source, vector } from "./utils/vector.js";
 import XYZ from "ol/source/XYZ";
 import { Tile as TileLayer } from "ol/layer.js";
-import { Select } from 'ol/interaction.js';
 import { Vector as VectorSource } from "ol/source.js";
 import { Vector as VectorLayer } from "ol/layer.js";
-
+import GeoJSON from 'ol/format/GeoJSON.js';
 
 let sketch;
 let features = [];
@@ -25,6 +24,9 @@ const colorSelect = document.getElementById('colorSelect');
 const typeSelect = document.getElementById("type");
 const clearAll = document.getElementById("deleteAll");
 const undoButton = document.getElementById('undo');
+
+//* create a new instance of the GeoJSON format:
+const format = new GeoJSON();
 
 export const source = new VectorSource();
 export const vector = new VectorLayer({
@@ -130,10 +132,44 @@ function addInteractions() {
         width: 2
       })
     }));
+
+    evt.feature.set('color', selectedColor);
+
+    // Save all features to localStorage
+    setTimeout(function() {
+      const features = source.getFeatures();
+      console.log({features})
+      const featuresGeoJSON = format.writeFeatures(features);
+      console.log(JSON.parse(featuresGeoJSON))
+      localStorage.setItem('features', featuresGeoJSON);
+    }, 0);
   });
 }
 
 //*------------------------------------------------ Event listener ---------------------------------------------//
+
+window.onload = function() {
+  const featuresGeoJSON = localStorage.getItem('features');
+  if (featuresGeoJSON) {
+    const features = format.readFeatures(featuresGeoJSON);
+    // The readFeatures method is used to parse a GeoJSON string and return an array of features.
+    // The features are created according to the GeoJSON specification, which means their geometries and properties are read from the GeoJSON and assigned to the new features.
+    // This method is particularly useful when you want to load GeoJSON data from a server or a file and then use it in your application.
+    
+    features.forEach(function(feature) {
+      const color = feature.get('color');
+      feature.setStyle(new Style({
+        stroke: new Stroke({
+          color: color,
+          width: 2
+        })
+      }));
+    });
+    source.addFeatures(features);
+  }
+};
+
+
 
 
 //TODO: Get coordinate when point a place on map
