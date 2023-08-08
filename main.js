@@ -10,30 +10,33 @@ import { Circle as CircleStyle, Fill, Stroke, Style } from "ol/style.js";
 import { unByKey } from "ol/Observable.js";
 import { LineString, Polygon } from "ol/geom.js";
 import { formatArea, formatLength } from "./utils/utils.js";
-import { source, vector } from "./utils/vector.js";
+// import { source, vector } from "./utils/vector.js";
 import XYZ from "ol/source/XYZ";
 import { Tile as TileLayer } from "ol/layer.js";
+import { Select } from 'ol/interaction.js';
+import { Vector as VectorSource } from "ol/source.js";
+import { Vector as VectorLayer } from "ol/layer.js";
 
-/**
- * Currently drawn feature.
- * @type {import("../src/ol/Feature.js").default}
- */
-let sketch, snap;
 
-/**
- * The measure tooltip element.
- * @type {HTMLElement}
- */
-// let measureTooltipElement;
-
-/**
- * Overlay to show the measurement.
- * @type {Overlay}
- */
-let measureTooltip;
-let measureTooltips = [];
+let sketch;
 let features = [];
 let drawnFeatures = [];
+const colorSelect = document.getElementById('colorSelect');
+const typeSelect = document.getElementById("type");
+const clearAll = document.getElementById("deleteAll");
+const undoButton = document.getElementById('undo');
+
+export const source = new VectorSource();
+export const vector = new VectorLayer({
+  source: source,
+  style: {
+    "fill-color": "rgba(255, 255, 255, 0.2)",
+    "stroke-color": `${colorSelect.value}`,
+    "stroke-width": 3,
+    "circle-radius": 7,
+    "circle-fill-color": "#ffcc33",
+  },
+});
 
 const map = new Map({
   // use OL3-Google-Maps recommended default interactions
@@ -66,11 +69,10 @@ const modify = new Modify({ source: source });
 map.addInteraction(modify);
 
 let draw; // global so we can remove them later
-const typeSelect = document.getElementById("type");
-const clearAll = document.getElementById("deleteAll");
-const undoButton = document.getElementById('undo');
-
 function addInteractions() {
+  const selectedColor = colorSelect.value;
+  console.log(selectedColor)
+
   draw = new Draw({
     source: source,
     type: typeSelect.value,
@@ -79,7 +81,7 @@ function addInteractions() {
         color: "rgba(255, 255, 255, 0.2)",
       }),
       stroke: new Stroke({
-        color: "red",
+        color: selectedColor,
         lineDash: [10, 10],
         width: 2,
       }),
@@ -90,7 +92,7 @@ function addInteractions() {
           color: "rgba(0, 0, 0, 0.7)",
         }),
         fill: new Fill({
-          color: "yellow",
+          color: selectedColor,
         }),
       }),
     }),
@@ -102,20 +104,15 @@ function addInteractions() {
     // set sketch
     sketch = evt.feature;
 
-    /** @type {import("../src/ol/coordinate.js").Coordinate|undefined} */
-    let tooltipCoord = evt.coordinate;
-
     listener = sketch.getGeometry().on("change", function (evt) {
       const geom = evt.target;
       let output;
       if (geom instanceof Polygon) {
         output = formatArea(geom);
-        tooltipCoord = geom.getInteriorPoint().getCoordinates();
       } else if (geom instanceof LineString) {
         output = formatLength(geom);
-        tooltipCoord = geom.getLastCoordinate();
       }
-      console.log(output);
+      // console.log(output);
     });
   });
 
@@ -125,8 +122,19 @@ function addInteractions() {
     //delete lineString
     features.push(evt.feature);
     drawnFeatures.push(evt.feature);
+
+    // Set the style of the drawn feature
+    evt.feature.setStyle(new Style({
+      stroke: new Stroke({
+        color: selectedColor,
+        width: 2
+      })
+    }));
   });
 }
+
+//*------------------------------------------------ Event listener ---------------------------------------------//
+
 
 //TODO: Get coordinate when point a place on map
 map.on("click", function (event) {
@@ -149,8 +157,9 @@ map.on("click", function (event) {
   // );
 });
 
-//------------------------------------------------ Delete ---------------------------------------------//
-
+/**
+ *! click to delete all action  
+*/
 clearAll.addEventListener("click", function () {
   // xóa vector
   source.clear();
@@ -161,6 +170,9 @@ clearAll.addEventListener("click", function () {
   measureTooltips = [];
 }); 
 
+/**
+ *! Click to undo action 
+*/
 undoButton.addEventListener('click', function() {
   const lastFeature = features.pop();
   if (lastFeature) {
@@ -168,6 +180,9 @@ undoButton.addEventListener('click', function() {
   }
 });
 
+/**
+ *! Support Ctrl+z to undo action 
+*/
 document.addEventListener('keydown', function(evt) {
   // Check if Ctrl + Z was pressed
   if (evt.ctrlKey && evt.key === 'z') {
@@ -187,4 +202,11 @@ typeSelect.onchange = function () {
   addInteractions();
 };
 
+colorSelect.onchange = function () {
+  map.removeInteraction(draw);
+  addInteractions();
+};
+
 addInteractions();
+
+export default colorSelect

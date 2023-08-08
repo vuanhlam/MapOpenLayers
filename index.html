@@ -56,7 +56,6 @@
     <div class="d-flex align-items-center">
       <form class="m-2 w-25">
         <select id="type" class="form-select" aria-label="Default select example">
-          <option value="Point">Point</option>
           <option value="LineString">Length (LineString)</option>
           <option value="Polygon">Area (Polygon)</option>
         </select>
@@ -68,7 +67,16 @@
         <button id="undo" type="button" class="btn btn-outline-primary">
           Undo
         </button>
+        <button id="deleteSelected" class="btn btn-outline-primary">Delete Selected</button>
       </div>
+    </div>
+    <div class="m-2 w-25">
+      <select id="colorSelect" class="form-select" aria-label="Default select example">
+        <option value="yellow">Vàng</option>
+        <option value="#1f97b2">Xanh</option>
+        <option value="#ff00ff">Hồng</option>
+        <!-- Add more colors as needed -->
+      </select>
     </div>
     <!-- Pointer events polyfill for old browsers, see https://caniuse.com/#feat=pointer -->
     <script src="https://cdn.jsdelivr.net/npm/elm-pep@1.0.6/dist/elm-pep.js"></script>
