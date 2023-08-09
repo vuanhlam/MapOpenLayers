@@ -24,6 +24,8 @@ const colorSelect = document.getElementById('colorSelect');
 const typeSelect = document.getElementById("type");
 const clearAll = document.getElementById("deleteAll");
 const undoButton = document.getElementById('undo');
+const toggleDrawButton = document.getElementById('toggleDraw');
+import { Select } from 'ol/interaction.js';
 
 //* create a new instance of the GeoJSON format:
 const format = new GeoJSON();
@@ -67,8 +69,11 @@ const map = new Map({
  *! It allows users to edit the vertices and geometry of vector features, such as points, lines, and polygons.
  *! edit when drawed vector
  */
-const modify = new Modify({ source: source });
-map.addInteraction(modify);
+// const modify = new Modify({ source: source });
+// map.addInteraction(modify);
+
+const select = new Select();
+map.addInteraction(select);
 
 let draw; // global so we can remove them later
 function addInteractions() {
@@ -138,8 +143,9 @@ function addInteractions() {
     // Save all features to localStorage
     setTimeout(function() {
       const features = source.getFeatures();
-      console.log({features})
+      // console.log({features})
       const featuresGeoJSON = format.writeFeatures(features);
+      const geometry = evt.feature.getGeometry();
       console.log(JSON.parse(featuresGeoJSON))
       localStorage.setItem('features', featuresGeoJSON);
     }, 0);
@@ -147,6 +153,36 @@ function addInteractions() {
 }
 
 //*------------------------------------------------ Event listener ---------------------------------------------//
+const deleteButton = document.getElementById('delete');
+
+
+toggleDrawButton.addEventListener('click', function() {
+  const isActive = draw.getActive();
+  draw.setActive(!isActive);
+});
+
+let selectedFeature;
+
+select.on('select', function(e) {
+  selectedFeature = e.selected[0];
+  if (selectedFeature) {
+    selectedFeature.setStyle(new Style({
+      stroke: new Stroke({
+        color: 'red',
+        width: 2
+      })
+    }));
+    console.log('active')
+  }
+});
+
+
+deleteButton.addEventListener('click', function() {
+  if (selectedFeature) {
+    source.removeFeature(selectedFeature);
+    selectedFeature = null;
+  }
+});
 
 window.onload = function() {
   const featuresGeoJSON = localStorage.getItem('features');
@@ -168,30 +204,6 @@ window.onload = function() {
     source.addFeatures(features);
   }
 };
-
-
-
-
-//TODO: Get coordinate when point a place on map
-map.on("click", function (event) {
-  // Get the clicked coordinate from the event
-  const clickedCoordinate = event.coordinate;
-
-  // Convert the clicked coordinate from the map projection (EPSG:3857) to lon/lat (EPSG:4326)
-  const lonLatCoordinate = toLonLat(clickedCoordinate);
-
-  // Extract the latitude and longitude from the lon/lat coordinate
-  const latitude = lonLatCoordinate[1];
-  const longitude = lonLatCoordinate[0];
-
-  // Now you have the latitude and longitude of the clicked point
-  // console.log(
-  //   "Vĩ độ -> Latitude:",
-  //   latitude,
-  //   "Kinh độ -> Longitude:",
-  //   longitude
-  // );
-});
 
 /**
  *! click to delete all action  
