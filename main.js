@@ -25,7 +25,9 @@ const typeSelect = document.getElementById("type");
 const clearAll = document.getElementById("deleteAll");
 const undoButton = document.getElementById('undo');
 const toggleDrawButton = document.getElementById('toggleDraw');
+const selectButton = document.getElementById('selectButton');
 import { Select } from 'ol/interaction.js';
+import { defaultLineCap } from "ol/render/canvas.js";
 
 //* create a new instance of the GeoJSON format:
 const format = new GeoJSON();
@@ -73,7 +75,6 @@ const map = new Map({
 // map.addInteraction(modify);
 
 const select = new Select();
-map.addInteraction(select);
 
 let draw; // global so we can remove them later
 function addInteractions() {
@@ -176,6 +177,16 @@ select.on('select', function(e) {
   }
 });
 
+let selectActive = false;
+
+selectButton.addEventListener('click', function() {
+    if (selectActive) {
+        map.removeInteraction(select);
+    } else {
+        map.addInteraction(select);
+    }
+    selectActive = !selectActive;
+});
 
 deleteButton.addEventListener('click', function() {
   if (selectedFeature) {
